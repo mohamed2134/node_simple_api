@@ -13,19 +13,10 @@ console.log("connection  successfully established");
 const db = client.db(dbName);
 let users = db.collection("users");
 
-users.find({}).next().then(
-    (doc)=>{
-      console.log(JSON.stringify(doc,undefined,2));
-      console.log("------------------------------------");
-    }
-  ,
-  (err)=>{
-    console.log(err);
-  }
-);
+users.find({}).forEach((item)=>{
+  console.log(item.name);
+});
 
-
+console.log("close connection  ...");
 client.close();
-
-
 });
