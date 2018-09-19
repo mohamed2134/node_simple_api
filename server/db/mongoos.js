@@ -1,5 +1,5 @@
 const mongoos = require("mongoose");
-const dbName = "todo";
+const dbName = "todos";
 const localUrl = "mongodb://localhost/"+dbName;
 const user = "mohamed";
 const password = "m010095707099";
