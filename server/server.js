@@ -1,7 +1,8 @@
-//const {personModel} = require('./models/user');
+const {User} = require('./models/user');
 const {ObjectId} = require("mongodb");
 const {mongoos} = require("./db/mongoos");
 const {todoModel} = require("./models/todo");
+const _ = require('lodash');
 const express = require("express");
 const bodyParser = require('body-parser');
 const app = express();
@@ -14,6 +15,7 @@ app.use(bodyParser.json());
 //  define our routes
 
 app.post('/todo',(req,res)=>{
+
     let newTodo = new todoModel(req.body);
 
 
@@ -66,9 +68,95 @@ app.get("/todo/:id" , (req,res)=>{
 });
 
 
+//   delete resource from  todo colllection
+
+app.delete("/todo/:id",(req,res)=>{
+
+    let id = req.params.id;
+    if(!ObjectId.isValid(id)){
+        return res.status(404).send("invalid id ");
+    }
+
+    todoModel.findByIdAndDelete(id).then(
+      (reslt)=>{
+        if(!reslt)
+           return res.status(404).send("not found document for this id ");
+        res.send(reslt);
+      },
+      (err)=>{
+        res.send(err);
+      }
+    );
+
+
+});
+
+//       update resource
+ app.patch('/todo/:id',(req,res)=>{
+        let todo =   todoModel;
+        let id = req.params.id;
+        if(!ObjectId.isValid(id)){
+            return res.status(404).send("invalid id ");
+        }
+        // get body Object
+        let body = _.pick(req.body,["text","completed"]);
+
+        if(_.isBoolean(body.completed) && body.completed){
+             body.createdAt = new Date().getTime();
+        }else{
+          body.completed = false;
+          body.createdAt = null;
+        }
+
+        console.log(body);
+        //find if document exist
+        todo.findById(id).then(
+          (doc)=>{
+            if(!doc){
+              return res.status(404).send("not found document for this id ");
+            }
+            todo.findByIdAndUpdate(id,{$set:body},{new:true}).then(
+              (doc)=>{
+                return res.send(doc);
+              },
+              (err)=>{
+                return res.send(err);
+              }
+            );
+
+          }
+          ,
+          (err)=>{
+            return res.send(err);
+          }
+        );
 
 
 
+
+ });
+
+
+////////////////////   user routes   ///////////////////////
+app.post('/user',(req,res)=>{
+
+   let body = _.pick(req.body,['email','password']);
+   let newuser = new User(body);
+    newuser.save().then(
+      (reslt)=>{
+        console.log(reslt);
+        res.send(body);
+      },
+      (err)=>{
+        console.log(err);
+        res.send(err);
+      }
+    );
+
+
+
+
+});
 
 
 

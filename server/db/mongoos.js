@@ -1,7 +1,9 @@
 const mongoos = require("mongoose");
-const dbName = "ToDo";
+const dbName = "todo";
+const localUrl = "mongodb://localhost/"+dbName;
   mongoos.Promise = global.Promise;
-  mongoos.connect("mongodb://localhost/"+dbName,{ useNewUrlParser: true });
+  mongoos.set('useFindAndModify', false);
+  mongoos.connect(localUrl,{ useNewUrlParser: true });
 
 
 

@@ -9,9 +9,12 @@ let todSchema = new Schema(
         required:true
 
       },
-      timestamp:{
-        type:Number,
-        default:new Date()
+      completed:{
+        type:Boolean,
+        default:false
+      },
+      createdAt:{
+        type:Date
       }
 
     }

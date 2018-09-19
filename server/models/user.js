@@ -1,33 +1,40 @@
-
+const mongoos = require("mongoose");
+const validator = require("validator");
 let Schema = mongoos.Schema;
 
-let personSchema = new Schema(
+let userSchema = new Schema(
     {
-      name:{
-        type:String,
-        trim:true,
-        required:true
 
-      },
-      age:{
-        type:Number,
-        default:0,
-        max:60
-      },
-      email:{
+       email:{
         type:String,
-        required:true
-      },
-      timestamp:{
-        type:Number,
-        default:new Date()
+        required:true,
+        unique:true,
+        minlength:6,
+        trim:true,
+        validate:{
+             validator: (value)=>{
+            return validator.isEmail(value);
+          },
+          message:`is invalid email`
+        }
       }
+      ,
+
+      password:{
+        type:String,
+        minlength:8,
+        required:true
+      }
+      ,
+      token:[
+
+      ]
 
     }
 );
 
-let personModel = mongoos.model("persons",personSchema);
+let User = mongoos.model("users",userSchema);
 
 module.exports = {
-  personModel
+  User
 }
