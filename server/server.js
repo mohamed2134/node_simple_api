@@ -3,8 +3,10 @@ const {ObjectId} = require("mongodb");
 const {mongoos} = require("./db/mongoos");
 const {todoModel} = require("./models/todo");
 const _ = require('lodash');
+const jwt = require('jsonwebtoken');
 const express = require("express");
 const bodyParser = require('body-parser');
+
 const app = express();
 //   server config
 const port = process.env.PORT || 5000;
@@ -95,6 +97,7 @@ app.delete("/todo/:id",(req,res)=>{
  app.patch('/todo/:id',(req,res)=>{
         let todo =   todoModel;
         let id = req.params.id;
+
         if(!ObjectId.isValid(id)){
             return res.status(404).send("invalid id ");
         }
@@ -142,16 +145,54 @@ app.post('/user',(req,res)=>{
 
    let body = _.pick(req.body,['email','password']);
    let newuser = new User(body);
+
+
     newuser.save().then(
-      (reslt)=>{
-        console.log(reslt);
-        res.send(body);
+      ()=>{
+        return   newuser.generateAthorToken();
       },
       (err)=>{
         console.log(err);
         res.send(err);
       }
-    );
+    ).then(
+      (token)=>{
+            res.header('x-auth',token).send(newuser);
+      },
+      (err)=>{
+        res.send(err);
+      }
+    ).catch((e)=>{
+      console.log(e);
+    });
+
+
+
+
+});
+
+
+//            private routes
+
+app.get("/user/me",(req,res)=>{
+
+     let token = req.header('x-auth');
+
+     User.findByToken(token).then(
+       (user)=>{
+          console.log(user);
+          if(!user){
+               return res.status(404).send("user not exist empty");
+          }
+          return res.send(user);
+       },
+       (err)=>{
+            return res.status(404).send("user not exist error promise");
+       }
+     ).catch((err)=>{
+       console.log(err);
+        return res.status(404).send("user not exist catch erro");
+     });
 
 
 
