@@ -3,7 +3,7 @@ const {ObjectId} = require("mongodb");
 const {mongoos} = require("./db/mongoos");
 const {todoModel} = require("./models/todo");
 const _ = require('lodash');
-const jwt = require('jsonwebtoken');
+const {authentication} = require('./middlewares/authApi');
 const express = require("express");
 const bodyParser = require('body-parser');
 
@@ -174,33 +174,10 @@ app.post('/user',(req,res)=>{
 
 //            private routes
 
-app.get("/user/me",(req,res)=>{
+app.get("/user/me",authentication,(req,res)=>{
 
-     let token = req.header('x-auth');
-
-     User.findByToken(token).then(
-       (user)=>{
-          console.log(user);
-          if(!user){
-               return res.status(404).send("user not exist empty");
-          }
-          return res.send(user);
-       },
-       (err)=>{
-            return res.status(404).send("user not exist error promise");
-       }
-     ).catch((err)=>{
-       console.log(err);
-        return res.status(404).send("user not exist catch erro");
-     });
-
-
-
-
+   res.send(req.user);
 });
-
-
-
 
 
 
