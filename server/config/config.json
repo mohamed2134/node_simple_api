@@ -1,0 +1,21 @@
+{
+  "DB":{
+    "local":{
+    "NAME":"TODOS",
+    "URL":"mongodb://localhost/"
+  },
+  "production":{
+    "NAME":"TODOS",
+    "USER":"mohamed",
+    "PASSWORD":"m010095707099",
+    "URL":"`mongodb://${user}:${password}@ds261332.mlab.com:61332/${dbName}`"
+  }
+
+  }
+  ,
+  "development":{
+    "PORT":5555,
+    "JWT_SECRET":"312j42kjh4hh3#44fj4l"
+  }
+
+}

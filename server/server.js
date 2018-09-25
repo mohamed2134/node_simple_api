@@ -1,10 +1,12 @@
 const {User} = require('./models/user');
+const config = require('./config/config');
 const {ObjectId} = require("mongodb");
 const {mongoos} = require("./db/mongoos");
 const {todoModel} = require("./models/todo");
 const _ = require('lodash');
 var bcrypt = require('bcrypt');
 const {authentication} = require('./middlewares/authApi');
+const {loginAuth} = require('./middlewares/login');
 const express = require("express");
 const bodyParser = require('body-parser');
 
@@ -17,9 +19,12 @@ app.set('view engine', 'hbs');
 app.use(bodyParser.json());
 //  define our routes
 
-app.post('/todo',(req,res)=>{
+app.post('/todo',authentication,(req,res)=>{
 
-    let newTodo = new todoModel(req.body);
+    let newTodo = new todoModel({
+      'text':req.body.text,
+      '_creator':req.user._id
+    });
 
 
      newTodo.save().then(
@@ -38,9 +43,9 @@ app.post('/todo',(req,res)=>{
 });
 
 
-app.get('/todo',(req,res)=>{
+app.get('/todo',authentication,(req,res)=>{
 
-     todoModel.find().then((reslt)=>{
+     todoModel.find({'_creator':req.user._id}).then((reslt)=>{
        res.send({reslt});
      },
     (err)=>{
@@ -50,12 +55,12 @@ app.get('/todo',(req,res)=>{
 });
 
 
-app.get("/todo/:id" , (req,res)=>{
+app.get("/todo/:id" ,authentication, (req,res)=>{
   let id  = req.params.id;
   if(!ObjectId.isValid(id))
      return res.status(404).send({err:"invalid Id Casting "});
 
-  todoModel.findById(id).then(
+  todoModel.find({'_id':id,'_creator':req.user._id}).then(
       (result)=>{
         if(!result)
            return res.status(404).send({err:"Object not exist for this id"});
@@ -73,17 +78,17 @@ app.get("/todo/:id" , (req,res)=>{
 
 //   delete resource from  todo colllection
 
-app.delete("/todo/:id",(req,res)=>{
+app.delete("/todo/:id",authentication,(req,res)=>{
 
     let id = req.params.id;
     if(!ObjectId.isValid(id)){
         return res.status(404).send("invalid id ");
     }
 
-    todoModel.findByIdAndDelete(id).then(
+    todoModel.findOneAndDelete({'_id':id,'_creator':req.user._id}).then(
       (reslt)=>{
         if(!reslt)
-           return res.status(404).send("not found document for this id ");
+           return res.status(404).send("not found document ");
         res.send(reslt);
       },
       (err)=>{
@@ -95,7 +100,7 @@ app.delete("/todo/:id",(req,res)=>{
 });
 
 //       update resource
- app.patch('/todo/:id',(req,res)=>{
+ app.patch('/todo/:id',authentication,(req,res)=>{
         let todo =   todoModel;
         let id = req.params.id;
 
@@ -114,7 +119,7 @@ app.delete("/todo/:id",(req,res)=>{
 
 
         //find if document exist
-        todo.findById(id).then(
+        todo.find({'_id':id,'_creator':req.user._id}).then(
           (doc)=>{
             if(!doc){
               return res.status(404).send("not found document for this id ");
@@ -184,31 +189,30 @@ app.get("/user/me",authentication,(req,res)=>{
 
 
 //          login routes
-app.post('/users/login',(req,res)=>{
+app.post('/users/login',loginAuth,(req,res)=>{
+        let user = req.user;
+    user.generateAthorToken().then(
+      (token)=>{
+         res.header('x-auth',token).send(user);
+      }
+    ).catch((err)=>{ res.send(err); });
 
-      let body  = _.pick(req.body ,['email','password'])
 
-      User.findOne({'email':body.email}).then(
-         (user)=>{
-            if(!user){
-              return res.status(404).send("sorry mail not exist");
-            }
 
-            bcrypt.compare(body.password,user.password,(err,reslt)=>{
-              if(err)
-                 return res.status(404).send("sorry wrong password");
-              return  res.status(200).send(user.tokens);
-            });
+});
 
+//    logout user and delete the tokens
+app.delete('/user/me/token',authentication,(req,res)=>{
+
+        let user = req.user;
+        user.removeToken(req.token).then(
+          (user)=>{
+            res.send("user loged out");
+          },
+          (err)=>{
+            res.send(err);
           }
-            ,
-            (err)=>{
-              return res.status(404).send("sorry mail not exist");
-            }
-
-      );
-
-
+        );
 
 
 });

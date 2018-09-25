@@ -15,6 +15,10 @@ let todSchema = new Schema(
       },
       createdAt:{
         type:Date
+      },
+      _creator:{
+        required:true,
+        type:mongoos.Schema.Types.ObjectId
       }
 
     }

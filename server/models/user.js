@@ -57,7 +57,7 @@ userSchema.methods.toJSON = function(){
 userSchema.methods.generateAthorToken = function(){
   let user = this;
   var access = "auth";
-  var token  = jwt.sign({_id:user._id.toHexString(),access},"123abc").toString();
+  var token  = jwt.sign({_id:user._id.toHexString(),access},process.env.JWT_SECRET).toString();
 
  user.tokens.push({access,token});
 
@@ -78,7 +78,7 @@ userSchema.statics.findByToken = function(token){
     var user = this;
     let decoded;
     try{
-      decoded  =   jwt.verify(token,"123abc");
+      decoded  =   jwt.verify(token,process.env.JWT_SECRET);
      }catch(e){
           return Promise.reject();
      }
@@ -87,6 +87,15 @@ userSchema.statics.findByToken = function(token){
 
 }
 
+userSchema.methods.removeToken  = function(token) {
+    let user = this;
+
+   return user.update({
+     $pull:{tokens:{'token':token}}
+   });
+
+
+}
 
 userSchema.pre('save',function(next){
 

@@ -10,14 +10,14 @@ let authentication = function(req,res,next){
   User.findByToken(token).then(
     (user)=>{
        if(!user){
-            return res.status(404).send("user not exist empty");
+            return res.status(404).send("authentication error");
        }
       req.user = user;
       req.token = token;
       next();
     },
     (err)=>{
-         return res.status(404).send("user not exist error promise");
+         return res.status(404).send("authentication error");
     }
   ).catch((err)=>{
     console.log(err);
