@@ -3,6 +3,7 @@ const {ObjectId} = require("mongodb");
 const {mongoos} = require("./db/mongoos");
 const {todoModel} = require("./models/todo");
 const _ = require('lodash');
+var bcrypt = require('bcrypt');
 const {authentication} = require('./middlewares/authApi');
 const express = require("express");
 const bodyParser = require('body-parser');
@@ -111,7 +112,7 @@ app.delete("/todo/:id",(req,res)=>{
           body.createdAt = null;
         }
 
-        console.log(body);
+
         //find if document exist
         todo.findById(id).then(
           (doc)=>{
@@ -141,6 +142,7 @@ app.delete("/todo/:id",(req,res)=>{
 
 
 ////////////////////   user routes   ///////////////////////
+      //  save new user
 app.post('/user',(req,res)=>{
 
    let body = _.pick(req.body,['email','password']);
@@ -152,18 +154,19 @@ app.post('/user',(req,res)=>{
         return   newuser.generateAthorToken();
       },
       (err)=>{
-        console.log(err);
-        res.send(err);
+
+          throw new Error(err);
       }
     ).then(
       (token)=>{
             res.header('x-auth',token).send(newuser);
       },
       (err)=>{
-        res.send(err);
+        return res.send(" =>"+err);
       }
     ).catch((e)=>{
-      console.log(e);
+      console.log("catch handeled");
+      res.send(e);
     });
 
 
@@ -179,6 +182,36 @@ app.get("/user/me",authentication,(req,res)=>{
    res.send(req.user);
 });
 
+
+//          login routes
+app.post('/users/login',(req,res)=>{
+
+      let body  = _.pick(req.body ,['email','password'])
+
+      User.findOne({'email':body.email}).then(
+         (user)=>{
+            if(!user){
+              return res.status(404).send("sorry mail not exist");
+            }
+
+            bcrypt.compare(body.password,user.password,(err,reslt)=>{
+              if(err)
+                 return res.status(404).send("sorry wrong password");
+              return  res.status(200).send(user.tokens);
+            });
+
+          }
+            ,
+            (err)=>{
+              return res.status(404).send("sorry mail not exist");
+            }
+
+      );
+
+
+
+
+});
 
 
 
